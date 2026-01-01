@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>脫單群友情大考驗 Final</title>
+    <style>
+        :root {
+            /* 莫蘭迪色系：低飽和度的高級灰調 */
+            --bg-color-1: #D8E2DC;  /* 迷霧灰綠 */
+            --bg-color-2: #FFE5D9;  /* 柔粉橘 */
+            --bg-color-3: #ECE4DB;  /* 奶茶米 */
+            
+            --primary: #95A5A6;     /* 莫蘭迪綠灰 */
+            --primary-dark: #7F8C8D;/* 深岩灰 */
+            --accent: #E0A96D;      /* 焦糖橘 */
+            
+            --text-main: #585858;   /* 暖深灰 */
+            --text-sub: #909090;    /* 淺灰 */
+            
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            
+            --correct: #A3C4BC;     /* 莫蘭迪薄荷 */
+            --wrong: #E5989B;       /* 莫蘭迪乾燥玫瑰 */
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--text-main);
+            
+            /* 動態流光背景 (莫蘭迪配色) */
+            background: linear-gradient(-45deg, #D8E2DC, #FFE5D9, #ECE4DB, #DAEAF6);
+            background-size: 400% 400%;
+            animation: gradientBG 12s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- 1. 首頁 (懸浮層次設計) --- */
+        .full-screen-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            /* 強效毛玻璃 */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .home-card {
+            background: var(--glass-bg);
+            padding: 50px 30px;
+            border-radius: 30px;
+            box-shadow: var(--glass-shadow);
+            text-align: center;
+            max-width: 380px;
+            width: 100%;
+            border: 1px solid var(--glass-border);
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 裝飾光暈 */
+        .home-card::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .emoji-icon {
+            font-size: 72px;
+            margin-bottom: 20px;
+            display: inline-block;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.1));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .main-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 15px 0;
+            letter-spacing: 2px;
+        }
+
+        .sub-title {
+            color: var(--text-sub);
+            font-size: 15px;
+            line-height: 1.7;
+            margin-bottom: 40px;
+            font-weight: 500;
+        }
+
+        .btn-start {
+            background: var(--primary-dark);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            font-size: 17px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(127, 140, 141, 0.3);
+            transition: all 0.2s;
+            letter-spacing: 1px;
+        }
+
+        .btn-start:active {
+            transform: scale(0.96);
+            box-shadow: 0 5px 10px rgba(127, 140, 141, 0.3);
+        }
+
+        /* --- 2. 遊戲介面 --- */
+        
+        /* 頂部懸浮儀表板 */
+        .top-dashboard {
+            width: 92%;
+            max-width: 500px;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 15px 20px;
+            border-radius: 24px;
+            display: none; 
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            backdrop-filter: blur(12px);
+            z-index: 10;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge-info {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .counter-box {
+            font-family: 'Helvetica Neue', sans-serif;
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 18px;
+        }
+
+        .progress-track {
+            height: 8px;
+            background: #EAEAEA;
+            border-radius: 10px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #B5C9C3);
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            border-radius: 10px;
+        }
+
+        /* 題目卡片 */
+        .quiz-card {
+            background: var(--glass-bg);
+            width: 92%;
+            max-width: 500px;
+            border-radius: 28px;
+            padding: 30px 25px;
+            margin-top: 25px;
+            margin-bottom: 40px;
+            box-shadow: var(--glass-shadow);
+            display: none;
+            flex-direction: column;
+            border: 1px solid var(--glass-border);
+            animation: slideUp 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            align-items: center;
+        }
+
+        .category-pill {
+            background: rgba(149, 165, 166, 0.15);
+            color: var(--primary-dark);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .stars {
+            color: var(--accent);
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .question-text {
+            font-size: 19px;
+            font-weight: 600;
+            line-height: 1.6;
+            color: var(--text-main);
+            margin-bottom: 30px;
+            min-height: 70px;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .option-btn {
+            background: rgba(255,255,255,0.8);
+            border: 1px solid rgba(255,255,255,0.9);
+            padding: 18px 20px;
+            border-radius: 18px;
+            text-align: left;
+            font-size: 16px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        .option-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+        }
+
+        .option-btn:active {
+            transform: scale(0.98);
+        }
+
+        .option-btn.correct {
+            background: var(--correct) !important;
+            color: white !important;
+            border-color: var(--correct) !important;
+            box-shadow: 0 5px 15px rgba(163, 196, 188, 0.4);
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong) !important;
+            color: white !important;
+            border-color: var(--wrong) !important;
+            opacity: 0.9;
+        }
+
+        /* 解析區 */
+        .reveal-box {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 18px;
+            padding: 20px;
+            margin-top: 25px;
+            border-left: 5px solid var(--primary-dark);
+            display: none;
+            animation: fadeIn 0.4s;
+        }
+
+        .reveal-title {
+            font-weight: 800;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 16px;
+            color: var(--primary-dark);
+        }
+
+        .reveal-text {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* 底部按鈕區 */
+        .bottom-area {
+            width: 92%;
+            max-width: 500px;
+            margin-bottom: 40px;
+            display: none;
+            /* 修正：增加底部內距，防止手機瀏覽器導航列遮擋 */
+            padding-bottom: 30px; 
+        }
+
+        .btn-next {
+            background: var(--text-main);
+            color: white;
+            border: none;
+            padding: 16px;
+            width: 100%;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        
+        .btn-next:active {
+            transform: scale(0.98);
+        }
+
+        /* 3. 結算畫面 */
+        .score-display {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 56px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin: 0 auto 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border: 5px solid rgba(255,255,255,0.5);
+        }
+
+        @keyframes float { 0% {transform: translateY(0px);} 50% {transform: translateY(-12px);} 100% {transform: translateY(0px);} }
+        @keyframes slideUp { from {opacity: 0; transform: translateY(20px);} to {opacity: 1; transform: translateY(0);} }
+        @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
+
+    </style>
+</head>
+<body>
+
+    <div id="startScreen" class="full-screen-overlay">
+        <div class="home-card">
+            <div class="emoji-icon">💩🤍</div>
+            <h1 class="main-title">脫單群<br>友情大考驗</h1>
+            <p class="sub-title">
+                致那些年我們一起講過的幹話<br>
+                2000 多個日子裡的相愛相殺
+            </p>
+            <button class="btn-start" onclick="startQuiz()">接受挑戰</button>
+        </div>
+    </div>
+
+    <div id="topDashboard" class="top-dashboard">
+        <div class="dashboard-header">
+            <span class="badge-info">Friendship Quiz</span>
+            <span class="counter-box">
+                <span id="currQ">1</span>
+                <span id="totalQ" style="opacity:0.5; font-size:14px;"></span>
+            </span>
+        </div>
+        <div class="progress-track">
+            <div id="progFill" class="progress-fill"></div>
+        </div>
+    </div>
+
+    <div id="quizCard" class="quiz-card">
+        <div class="card-meta">
+            <span id="catBadge" class="category-pill">類別</span>
+            <span id="starBox" class="stars">★★★★★</span>
+        </div>
+
+        <div id="qText" class="question-text">題目載入中...</div>
+
+        <div id="optContainer" class="options-container"></div>
+
+        <div id="revealBox" class="reveal-box">
+            <span id="revTitle" class="reveal-title"></span>
+            <p id="revDesc" class="reveal-text"></p>
+        </div>
+    </div>
+
+    <div id="bottomArea" class="bottom-area">
+        <button class="btn-next" onclick="nextQuestion()">下一題</button>
+    </div>
+
+    <div id="resultScreen" class="full-screen-overlay" style="display:none;">
+        <div class="home-card">
+            <h2 class="main-title" style="font-size:24px; margin-bottom:25px;">測驗結果</h2>
+            <div id="finalScore" class="score-display">0</div>
+            <h3 id="rankTitle" style="color:var(--text-main); margin-bottom:10px;">稱號</h3>
+            <p id="rankComment" style="color:#666; line-height:1.6; margin-bottom:30px;">評語</p>
+            <button class="btn-start" onclick="location.reload()">不服再來</button>
+        </div>
+    </div>
+
+    <script>
+        // 30題資料庫
+        const quizData = [
+            {
+                category: "💩 生死交關",
+                stars: 5,
+                question: "2021年，日華因為嚴重便秘把馬桶堵住，Ning 展現「水電工男友力」傳授了什麼通馬桶秘訣？",
+                options: ["倒入大量熱水", "用衣架勾出來", "直直壓下去造成真空", "用保鮮膜封住馬桶"],
+                answer: 2,
+                desc: "Ning 專業教學：「吸馬桶的要直直的往下按...創造真空狀態」。日華表示差點死在馬桶上。"
+            },
+            {
+                category: "💥 職場災難",
+                stars: 4,
+                question: "2022年，湘君發生了「蠻牛慘案」，導致屁股都是蠻牛味。請問當下發生了什麼事？",
+                options: ["坐在蠻牛箱子上", "搬貨時蠻牛砸下來", "騎車蠻牛在車廂爆炸", "被客人潑蠻牛"],
+                answer: 1,
+                desc: "湘君蹲著補貨，上方的蠻牛箱子承受不住倒塌，蠻牛灑滿地，她直接跌坐在蠻牛海裡。"
+            },
+            {
+                category: "🔞 驚人語錄",
+                stars: 5,
+                question: "在討論工程師薪水很高想躺平時，Tako 語出驚人地開玩笑說他要去做什麼？",
+                options: ["去賣屁股", "去吸富人的老二", "去當 Sugar Baby", "去撿回收"],
+                answer: 1,
+                desc: "Tako 崩潰喊：「我也要去吸富人的老二了」，K 冷靜回：「我寧願當窮人」。"
+            },
+            {
+                category: "🤐 尷尬時刻",
+                stars: 3,
+                question: "K 第一次去女友家時，因為太尷尬或剛睡醒，看到對方爸爸時只說了哪個字？",
+                options: ["嗨！", "伯父好", "早安", "（點頭示意）"],
+                answer: 0,
+                desc: "K 說他睡過頭起來看到對方爸爸，腦袋當機只回了個「嗨」，讓群組笑瘋。"
+            },
+            {
+                category: "🍦 豆花戰爭",
+                stars: 4,
+                question: "2021年，日華的媽媽不滿意她男友的工作，甚至因此爆氣。請問她男友當時是在做什麼？",
+                options: ["做工地的", "開卡車的", "賣豆花的", "送外賣的"],
+                answer: 2,
+                desc: "日華說男友在市場賣豆花，媽媽覺得太辛苦，寧願她交同班同學也不要賣豆花的。"
+            },
+            {
+                category: "🦕 奇怪約會",
+                stars: 3,
+                question: "Ning 說她約會時很喜歡去一個「充滿實際操作」的地方，但被日華嫌太博學。那是哪裡？",
+                options: ["故宮博物院", "台中歌劇院", "科博館", "美術館"],
+                answer: 2,
+                desc: "Ning 說：「我約會也會去科博館欸，玩的很開心」，因為有很多互動裝置。"
+            },
+            {
+                category: "😂 貼圖大戶",
+                stars: 3,
+                question: "Tako 剛加入群組時，因為什麼原因讓他興奮大喊「我的貼圖可以用了」？",
+                options: ["剛買了新貼圖", "終於有朋友可以傳", "貼圖剛審核通過", "LINE剛更新"],
+                answer: 1,
+                desc: "Tako 買了一堆猥瑣/好笑貼圖，終於有群組可以讓他狂傳。"
+            },
+            {
+                category: "💇‍♀️ 天價美髮",
+                stars: 5,
+                question: "湘君🌼 曾分享她去燙頭髮的天價，讓 K 直呼「我的薪水可以讓妳燙四次」。請問那顆頭花了多少錢？",
+                options: ["6800元", "8800元", "9800元", "12000元"],
+                answer: 2,
+                desc: "湘君說花了「9800」，K 當時薪水 38k，忍不住換算了一下。"
+            },
+            {
+                category: "🥟 省錢智慧",
+                stars: 4,
+                question: "湘君🌼 為了省錢吃一顆 7.5 元的「小包子」，她分享了什麼「獨門微波秘訣」，宣稱可以讓壓扁的包子變回有彈性？",
+                options: ["蓋濕布", "放一杯水一起微波", "噴酒精", "用吹風機吹"],
+                answer: 1,
+                desc: "湘君說：「旁邊要放一杯水一起微波，它就會又有彈性，變回完整的包子！」"
+            },
+            {
+                category: "🎂 生日行程",
+                stars: 2,
+                question: "2019年為了慶祝湘君19歲生日，最後定案的行程是？",
+                options: ["六福村水樂園", "騎腳踏車去碧潭", "吃韓式炸雞", "夜唱星聚點"],
+                answer: 1,
+                desc: "雖然原本想去更遠的地方，最後決定是健康的碧潭單車行。"
+            },
+            {
+                category: "⏰ 社畜日常",
+                stars: 3,
+                question: "K 分享他的上班打卡哲學，如果他實際上 9:35 才停好車上樓，他在手寫打卡單上會寫幾點？",
+                options: ["9:30", "9:35", "9:40", "9:45"],
+                answer: 1,
+                desc: "K 說：「反正35也沒差，還是不要太難看」，所以雖然遲到但還是誠實寫了 35 分。"
+            },
+            {
+                category: "🎥 2020 DNA",
+                stars: 4,
+                question: "王正吉曾在群組貼出「2020 DNA」活動，是邀請大家去做什麼？",
+                options: ["拍片介紹旅遊", "組隊打傳說", "參加歌唱比賽", "創業競賽"],
+                answer: 0,
+                desc: "是要規劃一日遊並拍成3-5分鐘影片，不過後來好像沒成團。"
+            },
+            {
+                category: "🇬🇧 假ABC",
+                stars: 3,
+                question: "K 曾經在群組用超破的英文自我介紹，說他是新莊的什麼？",
+                options: ["Big Boss", "Smellgood Eight Old", "Handsome Boy", "Crazy Man"],
+                answer: 1,
+                desc: "K 打出：「I am Xinzhuang smellgood eight old」 (我是新莊香八老？)，完全不知所云。"
+            },
+            {
+                category: "📱 已讀文化",
+                stars: 3,
+                question: "因為 LINE 看不到誰已讀，湘君曾提議實施什麼新規定？",
+                options: ["按表情符號", "已讀要傳貼圖", "回覆「閱」", "每人都要打字"],
+                answer: 1,
+                desc: "結果造成貼圖洗版，大家為了證明自己活著狂傳貼圖。"
+            },
+            {
+                category: "💩 衛生紙之亂",
+                stars: 5,
+                question: "K 曾跟老師借衛生紙去大便，結果老師只給他「兩張」，卻給了另一個同學「一整包」。K 覺得原因是？",
+                options: ["因為他長得衰", "因為他沒說老師好", "老師討厭大便的人", "同學是正妹"],
+                answer: 1,
+                desc: "K 覺得因為自己只說了「嗨」沒禮貌，加上長相問題，遭到差別待遇。"
+            },
+            {
+                category: "🎁 詭異禮物",
+                stars: 3,
+                question: "日華曾經送過一樣東西給湘君，寄到學校時湘君還在睡覺。那是什麼？",
+                options: ["巨型泰迪熊", "羽毛筆", "保險套", "生鮮食品"],
+                answer: 1,
+                desc: "日華突然想起：「話說我之前是不是送你們羽毛筆」，湘君淡定回：「有，我有用過」。"
+            },
+            {
+                category: "📚 指考戰士",
+                stars: 4,
+                question: "2019年群組剛創立時，大家為了讓「俊廷」專心指考，做出了什麼決定？",
+                options: ["每天傳題庫給他", "暫時不要邀他進群", "在他面前吃雞排", "幫他拜文昌帝君"],
+                answer: 1,
+                desc: "Ning 提議：「要等到指考完再邀嗎？」，以免打擾他唸書。"
+            },
+            {
+                category: "😱 訊息恐懼",
+                stars: 4,
+                question: "2021年大家剛轉戰 LINE，K 曾因為打一場遊戲回來，看到多少未讀訊息而感到驚恐？",
+                options: ["99+", "265則", "500則", "1000則"],
+                answer: 1,
+                desc: "K 驚恐表示：「？？我打一場 265未讀」。"
+            },
+            {
+                category: "🌙 深夜討拍",
+                stars: 3,
+                question: "K 曾在深夜發了一篇文討拍，內容大概是關於什麼？",
+                options: ["覺得自己很廢", "好想交女朋友", "工作好累", "肚子好餓"],
+                answer: 1,
+                desc: "K 感嘆自己單身太久，在群組深夜發牢騷說想脫單。"
+            },
+            {
+                category: "👥 認錯人",
+                stars: 4,
+                question: "K 曾經把 Ning 誤認成「玟」，只因為 Ning 傳了什麼東西？",
+                options: ["一張特定的貼圖", "一張自拍照", "一個奇怪的口頭禪", "一段語音"],
+                answer: 0,
+                desc: "K 看到 Ning 傳了一個特價買的貼圖，以為那是玟專用的，直接認錯。"
+            },
+            {
+                category: "❄️ 瞬間冷掉",
+                stars: 4,
+                question: "湘君🌼 曾說男生如果做了什麼行為，會讓她瞬間好感全失？",
+                options: ["吃飯發出聲音", "太自以為是", "指甲太長", "穿緊身褲"],
+                answer: 1,
+                desc: "湘君最討厭男生自以為是或在那邊裝懂，會直接冷掉。"
+            },
+            {
+                category: "🐶 寵物稱呼",
+                stars: 5,
+                question: "湘君🌼 覺得叫前男友「爸爸」很奇怪，所以她都怎麼對前男友的狗稱呼他？",
+                options: ["去葛格那邊", "去找你主人", "去找那個男的", "去找餵飯的"],
+                answer: 1,
+                desc: "湘君🌼 說：「我都說去你主人那邊」，Ning 覺得這定位很酷。"
+            },
+            {
+                category: "💃 富婆夢",
+                stars: 3,
+                question: "Tako 常常幻想自己能被什麼樣的對象包養？",
+                options: ["火辣空姐", "有錢的阿姨", "年輕女總裁", "石油大亨女兒"],
+                answer: 1,
+                desc: "Tako 崩潰喊想不想努力了，求有錢阿姨包養。"
+            },
+            {
+                category: "🤦‍♂️ 約會慘劇",
+                stars: 4,
+                question: "K 某次約會時發生了什麼尷尬事，讓他覺得沒戲唱了？",
+                options: ["忘記帶錢包", "褲子拉鍊沒拉", "叫錯女生名字", "卡牙縫"],
+                answer: 0,
+                desc: "K 結帳時發現忘記帶錢包，最後還是女生付錢，超級尷尬。"
+            },
+            {
+                category: "🗺 旅遊雷包",
+                stars: 3,
+                question: "在討論群組旅遊時，誰總是意見很多但最後都不幫忙規劃？",
+                options: ["Tako", "Ning", "K", "日華"],
+                answer: 3,
+                desc: "日華常常喊要去哪要去哪，但最後規劃行程的都是湘君或 Ning。"
+            },
+            {
+                category: "🙏 唯一順利",
+                stars: 3,
+                question: "K 說他 2024 年近期唯一順利的事情是什麼？",
+                options: ["工作加薪", "股票賺錢", "拜月老", "減肥成功"],
+                answer: 2,
+                desc: "K 感嘆：「近期唯一順利的事情：拜月老」。"
+            },
+            {
+                category: "🚗 戀愛腦",
+                stars: 5,
+                question: "Ning曾承認她喜歡前男友「光頭」的原因？",
+                options: ["摸起來手感好", "看起來很派沒人敢惹", "這樣就不會有人覺得他帥", "省下洗髮精的錢"],
+                answer: 2,
+                desc: "Ning表示：「我喜歡他光頭那段時期只是覺得，這樣就不會有人覺得他帥了」 。"
+            },
+            {
+                category: "👴 老人味",
+                stars: 3,
+                question: "湘君🌼 最受不了 K 傳什麼樣的訊息騷擾大家？",
+                options: ["早安長輩圖", "冷笑話", "自拍照", "股票資訊"],
+                answer: 0,
+                desc: "K 有陣子很愛傳那種「認同請分享」或早安圖，被湘君嫌棄老人味很重。"
+            },
+            {
+                category: "👵 養老計畫",
+                stars: 5,
+                question: "群組曾經開玩笑說，如果 30 歲大家還單身，就要一起去哪裡？",
+                options: ["去出家", "去養老院", "去環遊世界", "去跳海"],
+                answer: 1,
+                desc: "大家約定好如果都嫁不出去/娶不到，就一起住養老院互相照顧。"
+            },
+            {
+                category: "✂️ 語言隔閡",
+                stars: 4,
+                question: "K 在公司弄斷剪刀時，被同事說了一句台語「不要牙給」，讓他聽不懂很崩潰。請問那是什麼意思？？",
+                options: ["不要浪費", "不要自作聰明（自找麻煩）", "不要太用力", "不要生氣"],
+                answer: 1,
+                desc: "同事說「那還是不要牙給好了」K 內心崩潰：「幹我怎麼聽不懂，我太年輕了嗎」，Ning 解釋是明知還自討苦吃的意思。"
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let isAnswered = false;
+
+        // DOM 綁定
+        const startScreen = document.getElementById('startScreen');
+        const topDashboard = document.getElementById('topDashboard');
+        const quizCard = document.getElementById('quizCard');
+        const bottomArea = document.getElementById('bottomArea');
+        const resultScreen = document.getElementById('resultScreen');
+
+        const currQ = document.getElementById('currQ');
+        const totalQ = document.getElementById('totalQ'); 
+        const progFill = document.getElementById('progFill');
+
+        const catBadge = document.getElementById('catBadge');
+        const starBox = document.getElementById('starBox');
+        const qText = document.getElementById('qText');
+        const optContainer = document.getElementById('optContainer');
+
+        const revealBox = document.getElementById('revealBox');
+        const revTitle = document.getElementById('revTitle');
+        const revDesc = document.getElementById('revDesc');
+
+        function startQuiz() {
+            startScreen.style.display = 'none';
+            topDashboard.style.display = 'flex';
+            quizCard.style.display = 'flex';
+            bottomArea.style.display = 'block';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isAnswered = false;
+            const data = quizData[currentQuestion];
+            const total = quizData.length;
+
+            // 修正：動態更新總題數
+            totalQ.innerText = " / " + total;
+
+            // 更新儀表板
+            currQ.innerText = currentQuestion + 1;
+            const percent = ((currentQuestion + 1) / total) * 100;
+            progFill.style.width = percent + "%";
+
+            // 內容
+            catBadge.innerText = data.category;
+            
+            let stars = "";
+            for(let i=0; i<5; i++) {
+                stars += (i < data.stars) ? "★" : "☆";
+            }
+            starBox.innerText = stars;
+
+            qText.innerText = data.question;
+
+            // 選項
+            optContainer.innerHTML = '';
+            data.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(idx, btn, data);
+                optContainer.appendChild(btn);
+            });
+
+            // 重置解析
+            revealBox.style.display = 'none';
+            bottomArea.style.display = 'none'; 
+        }
+
+        function checkAnswer(selectedIdx, btn, data) {
+            if(isAnswered) return;
+            isAnswered = true;
+
+            const btns = optContainer.querySelectorAll('.option-btn');
+            
+            if(selectedIdx === data.answer) {
+                btn.classList.add('correct');
+                score += (100 / quizData.length);
+                revTitle.innerText = "✅ 答對了！";
+                revTitle.style.color = "var(--correct)";
+            } else {
+                btn.classList.add('wrong');
+                btns[data.answer].classList.add('correct');
+                revTitle.innerText = "❌ 答錯了！";
+                revTitle.style.color = "var(--wrong)";
+            }
+
+            revDesc.innerText = data.desc;
+            revealBox.style.display = 'block';
+            bottomArea.style.display = 'block';
+            
+            setTimeout(() => {
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }, 100);
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if(currentQuestion < quizData.length) {
+                loadQuestion();
+                window.scrollTo(0,0);
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            topDashboard.style.display = 'none';
+            quizCard.style.display = 'none';
+            bottomArea.style.display = 'none';
+            resultScreen.style.display = 'flex';
+
+            const finalScore = Math.round(score);
+            let temp = 0;
+            const timer = setInterval(() => {
+                if(temp >= finalScore) {
+                    clearInterval(timer);
+                    document.getElementById('finalScore').innerText = finalScore;
+                } else {
+                    temp++;
+                    document.getElementById('finalScore').innerText = temp;
+                }
+            }, 20);
+
+            let title="", comment="";
+            if(finalScore === 100) {
+                title = "🏆 群組活化石";
+                comment = "太扯了！這種細節你都記得？\n你是不是每天都在偷翻聊天記錄？";
+            } else if(finalScore >= 80) {
+                title = "🥇 核心成員";
+                comment = "很強欸！大部份的八卦你都有跟到。\n你是群組裡的靈魂人物吧？";
+            } else if(finalScore >= 60) {
+                title = "👀 潛水觀察員";
+                comment = "還行啦，勉強及格。\n有些太久以前的黑歷史可能忘記了。\n建議多出來喝咖啡聊是非☕️";
+            } else {
+                title = "🐟 金魚腦路人";
+                comment = "笑死，這分數是怎樣？\n你是不是都已讀不回？\n罰你請大家喝飲料謝罪！";
+            }
+            document.getElementById('rankTitle').innerText = title;
+            document.getElementById('rankComment').innerText = comment;
+        }
+    </script>
+</body>
+</html>
